@@ -1,6 +1,6 @@
 # Skin lesion check: MobileNetV3-Large on the phone
 
-**Live demo:** LIVE_URL
+**Live demo:** https://alialjawi.github.io/skin-lesion-phone-demo/
 
 A MobileNetV3-Large classifier for 8 skin-lesion types (the ISIC 2019 classes), fine-tuned on ISIC 2019 and PAD-UFES-20 with the training recipe from our MAAI901 group project. The model is exported to ONNX and runs inside the browser with ONNX Runtime Web, so photos are processed on the device and never uploaded. It works on phones and desktop browsers.
 
