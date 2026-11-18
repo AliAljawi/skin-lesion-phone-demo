@@ -1,0 +1,8 @@
+data/
+run/
+*.zip
+*.pt
+CLAUDE.md
+.claude/
+__pycache__/
+.ipynb_checkpoints/

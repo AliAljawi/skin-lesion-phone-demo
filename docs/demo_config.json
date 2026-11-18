@@ -1,0 +1,125 @@
+{
+  "model": "MobileNetV3-Large, full fine-tune (MAAI901 group recipe), demo retrain",
+  "onnx_file": "model.onnx",
+  "input_name": "image",
+  "output_name": "probs",
+  "input": {
+    "size": 224,
+    "layout": "NCHW float32, RGB in [0, 1]",
+    "resize": "squash the whole photo to a square (no crop), as in training"
+  },
+  "classes": [
+    "MEL",
+    "NV",
+    "BCC",
+    "AK",
+    "BKL",
+    "DF",
+    "VASC",
+    "SCC"
+  ],
+  "class_names": {
+    "MEL": "Melanoma",
+    "NV": "Melanocytic naevus (mole)",
+    "BCC": "Basal cell carcinoma",
+    "AK": "Actinic keratosis",
+    "BKL": "Benign keratosis-like lesion",
+    "DF": "Dermatofibroma",
+    "VASC": "Vascular lesion",
+    "SCC": "Squamous cell carcinoma"
+  },
+  "malignant_classes": [
+    "MEL",
+    "BCC",
+    "SCC"
+  ],
+  "refer_threshold": 0.6903996467590332,
+  "melanoma_threshold_90spec": 0.3610142171382904,
+  "test_summary": {
+    "n_test_images": 4140,
+    "macro_f1": 0.5898599184488598,
+    "macro_f1_ci95": [
+      0.5493637557094099,
+      0.6285738413840471
+    ],
+    "balanced_accuracy": 0.5868527416909458,
+    "melanoma_auc": 0.8826053738594055,
+    "malignancy_auc": 0.8897038698196411,
+    "refer_sensitivity": 0.6934357541899442,
+    "refer_specificity": 0.9032496307237814
+  },
+  "samples": [
+    {
+      "file": "samples/01_MEL_ISIC.jpg",
+      "true_label": "MEL",
+      "source": "ISIC 2019",
+      "note": "typical correct prediction",
+      "model_top": "MEL",
+      "model_top_prob": 0.958,
+      "image_id": "ISIC_0069951"
+    },
+    {
+      "file": "samples/02_NV_ISIC.jpg",
+      "true_label": "NV",
+      "source": "ISIC 2019",
+      "note": "typical correct prediction",
+      "model_top": "NV",
+      "model_top_prob": 0.966,
+      "image_id": "ISIC_0033729"
+    },
+    {
+      "file": "samples/03_BCC_PAD.jpg",
+      "true_label": "BCC",
+      "source": "PAD-UFES-20",
+      "note": "typical correct prediction",
+      "model_top": "BCC",
+      "model_top_prob": 0.968,
+      "image_id": "PAD_PAT_478_916_806"
+    },
+    {
+      "file": "samples/04_AK_PAD.jpg",
+      "true_label": "AK",
+      "source": "PAD-UFES-20",
+      "note": "typical correct prediction",
+      "model_top": "AK",
+      "model_top_prob": 0.993,
+      "image_id": "PAD_PAT_997_14_40"
+    },
+    {
+      "file": "samples/05_BKL_ISIC.jpg",
+      "true_label": "BKL",
+      "source": "ISIC 2019",
+      "note": "typical correct prediction",
+      "model_top": "BKL",
+      "model_top_prob": 0.933,
+      "image_id": "ISIC_0060493"
+    },
+    {
+      "file": "samples/06_SCC_ISIC.jpg",
+      "true_label": "SCC",
+      "source": "ISIC 2019",
+      "note": "typical correct prediction",
+      "model_top": "SCC",
+      "model_top_prob": 0.946,
+      "image_id": "ISIC_0064985"
+    },
+    {
+      "file": "samples/07_MEL_ISIC.jpg",
+      "true_label": "MEL",
+      "source": "ISIC 2019",
+      "note": "melanoma the model missed",
+      "model_top": "NV",
+      "model_top_prob": 0.775,
+      "image_id": "ISIC_0054523"
+    }
+  ],
+  "data_credits": "ISIC 2019 (CC BY-NC 4.0; Codella et al., 2018; Tschandl et al., 2018; Hernandez-Perez et al., 2024) and PAD-UFES-20 (CC BY 4.0; Pacheco et al., 2020)",
+  "created": "2026-11-18 14:18",
+  "versions": {
+    "torch": "2.14.1+cu130",
+    "torchvision": "0.29.1+cu130",
+    "onnx": "1.23.2",
+    "onnxruntime": "1.32.0",
+    "python": "3.13.14"
+  }
+}

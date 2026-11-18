@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>MobileNetV3 Skin Lesion Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one narrow column like a handheld instrument; the result card is the hero, everything else is quiet. */
+:root {
+  --bg: #f2f4f6;
+  --surface: #ffffff;
+  --ink: #111a22;
+  --muted: #576573;
+  --line: #d9e0e7;
+  --accent: #1d5bcf;
+  --accent-ink: #ffffff;
+  --refer: #a8361c;
+  --refer-bg: #fbe8e2;
+  --ok: #126b5f;
+  --ok-bg: #e0f2ed;
+  --bar: #c4d0dc;
+  --bar-mal: #dd8a72;
+  --warn-bg: #fff4d6;
+  --warn-ink: #6b4b00;
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1217; --surface: #141c23; --ink: #e6ecf1; --muted: #93a0ac; --line: #26323c;
+    --accent: #78a2ff; --accent-ink: #0c1217; --refer: #ff9273; --refer-bg: #3b1d16; --ok: #5ad3b9; --ok-bg: #0f2a25;
+    --bar: #34434f; --bar-mal: #b65a43; --warn-bg: #3a2f10; --warn-ink: #ffd98a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1217; --surface: #141c23; --ink: #e6ecf1; --muted: #93a0ac; --line: #26323c;
+  --accent: #78a2ff; --accent-ink: #0c1217; --refer: #ff9273; --refer-bg: #3b1d16; --ok: #5ad3b9; --ok-bg: #0f2a25;
+  --bar: #34434f; --bar-mal: #b65a43; --warn-bg: #3a2f10; --warn-ink: #ffd98a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.wrap { max-width: 34rem; margin: 0 auto; display: grid; gap: 18px; }
+.eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { font-size: 1.9rem; line-height: 1.15; margin: 4px 0 6px; font-weight: 700; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 0.95rem; margin: 0; font-weight: 600; }
+p { margin: 0; }
+.sub { color: var(--muted); max-width: 60ch; }
+.banner { background: var(--warn-bg); color: var(--warn-ink); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.status { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bar); flex: none; }
+.status[data-state="loading"] .dot { background: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+.status[data-state="ready"] .dot { background: var(--ok); }
+.status[data-state="error"] .dot { background: var(--refer); }
+.status[data-state="error"] { color: var(--refer); }
+@keyframes pulse { 50% { opacity: 0.3; } }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+button { font: inherit; cursor: pointer; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 14px 12px; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn:focus-visible, .sample:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.samples { display: grid; gap: 8px; }
+.strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; }
+.sample { flex: none; width: 104px; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 0; overflow: hidden; text-align: left; color: var(--ink); scroll-snap-align: start; }
+.sample img { display: block; width: 104px; height: 104px; object-fit: cover; }
+.sample > span { display: grid; gap: 1px; padding: 6px 8px 7px; font-size: 12px; line-height: 1.25; }
+.sample .code { font-family: var(--font-num); font-size: 11px; color: var(--muted); }
+.sample .src { font-size: 11px; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 14px; }
+.top { display: grid; grid-template-columns: 112px 1fr; gap: 14px; align-items: start; }
+.tile { display: grid; gap: 4px; }
+.tile canvas { width: 112px; height: 112px; border-radius: 10px; background: var(--bg); display: block; }
+.tile small { font-size: 11px; color: var(--muted); line-height: 1.3; }
+.verdict { display: grid; gap: 6px; min-width: 0; }
+.chip { justify-self: start; border-radius: 999px; padding: 5px 12px; font-weight: 700; font-size: 14px; }
+.chip.refer { background: var(--refer-bg); color: var(--refer); }
+.chip.ok { background: var(--ok-bg); color: var(--ok); }
+.chip.idle { background: var(--bg); color: var(--muted); }
+.score { font-size: 13.5px; color: var(--muted); }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.truth { font-size: 13.5px; border-left: 3px solid var(--line); padding-left: 8px; }
+.bars { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.bars li { display: grid; gap: 4px; }
+.bars .row { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.bars .name { min-width: 0; }
+.tag { font-family: var(--font-num); font-size: 11px; color: var(--muted); margin-right: 6px; }
+.mal { font-size: 11px; color: var(--refer); font-weight: 600; margin-left: 6px; white-space: nowrap; }
+.track { height: 8px; border-radius: 4px; background: var(--bg); overflow: hidden; }
+.fill { height: 100%; background: var(--bar); border-radius: 4px; transition: width 0.35s ease; }
+.fill.malignant { background: var(--bar-mal); }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+details { border-top: 1px solid var(--line); padding-top: 10px; }
+summary { cursor: pointer; font-size: 13.5px; color: var(--muted); }
+details .bars { margin-top: 10px; }
+.about { display: grid; gap: 12px; font-size: 14px; }
+.about h2 { font-size: 0.95rem; }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.facts div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.facts dt { font-size: 12px; color: var(--muted); }
+.facts dd { margin: 2px 0 0; font-family: var(--font-num); font-size: 17px; font-variant-numeric: tabular-nums; }
+.facts dd small { font-size: 11.5px; color: var(--muted); display: block; }
+.fine { font-size: 12.5px; color: var(--muted); }
+@media (max-width: 360px) { .top { grid-template-columns: 1fr; } .facts { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .fill { transition: none; } .status[data-state="loading"] .dot { animation: none; } }
+</style>
+</head>
+<body>
+
+
+<main class="wrap">
+  <header>
+    <div class="eyebrow">MAAI901 group project · live demo</div>
+    <h1>Skin lesion check</h1>
+    <p class="sub">MobileNetV3-Large sorts a photo of a skin lesion into 8 types, on this device. The photo never leaves the phone. Research demo, not a diagnosis.</p>
+  </header>
+
+  <p class="banner" id="placeholder" hidden>Placeholder model: this preview checks the page and the camera only. Its predictions are meaningless until the trained model is added.</p>
+
+  <div class="status" id="status" data-state="loading" role="status" aria-live="polite"><span class="dot"></span><span id="statusText">Loading the model…</span></div>
+
+  <div class="actions">
+    <button class="btn primary" id="camBtn" type="button" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+      Take a photo
+    </button>
+    <button class="btn" id="pickBtn" type="button" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.5"/></svg>
+      Choose an image
+    </button>
+    <input class="sr-only" type="file" id="camInput" accept="image/*" capture="environment" tabindex="-1">
+    <input class="sr-only" type="file" id="pickInput" accept="image/*" tabindex="-1">
+  </div>
+
+  <section class="samples" aria-labelledby="samplesTitle">
+    <h2 id="samplesTitle">Test images the model never saw in training</h2>
+    <div class="strip" id="strip"></div>
+  </section>
+
+  <section class="card" id="result" aria-live="polite" aria-labelledby="resultTitle">
+    <h2 class="sr-only" id="resultTitle">Result</h2>
+    <div class="top">
+      <div class="tile">
+        <canvas id="view" width="224" height="224" aria-label="The image as the model sees it"></canvas>
+        <small>Model input, 224 × 224, squashed to a square as in training</small>
+      </div>
+      <div class="verdict">
+        <span class="chip idle" id="chip">Waiting for an image</span>
+        <p class="score" id="score">Take a photo or tap a test image.</p>
+        <p class="truth" id="truth" hidden></p>
+      </div>
+    </div>
+    <div>
+      <h2 style="margin-bottom:10px">Most likely</h2>
+      <ol class="bars" id="top3"></ol>
+    </div>
+    <details>
+      <summary>All 8 classes</summary>
+      <ol class="bars" id="all"></ol>
+    </details>
+    <div class="meta" id="meta"><span>Runs with ONNX Runtime Web (WebAssembly) in this browser.</span></div>
+  </section>
+
+  <section class="about" aria-labelledby="aboutTitle">
+    <h2 id="aboutTitle">About this model</h2>
+    <dl class="facts" id="facts"></dl>
+    <p class="fine" id="howRefer"></p>
+    <p class="fine">On the external DDI set (clinical photos, all skin tones), the group's MobileNetV3-Large reached a malignancy AUC of 0.60, against 0.91 on its own test split. Treat phone photos of new patients with that drop in mind.</p>
+    <p class="fine" id="credits">Training data: ISIC 2019 (CC BY-NC 4.0) and PAD-UFES-20 (CC BY 4.0).</p>
+    <p class="fine">For teaching only. It cannot diagnose skin cancer; see a doctor about any lesion that worries you.</p>
+  </section>
+</main>
+
+<script>
+(() => {
+  const ORT_VERSION = '1.22.0';
+  const CDN = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dist/`;
+  const LOCAL = new URL('ort/', location.href).href;
+  const SIZE = 224, STEP = 256;
+  const $ = (id) => document.getElementById(id);
+  const state = { session: null, cfg: null, busy: false, runs: 0 };
+
+  function setStatus(kind, text) { $('status').dataset.state = kind; $('statusText').textContent = text; }
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = resolve; s.onerror = () => reject(new Error('could not load ' + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  const framed = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+
+  async function loadOrt() {
+    // Inside a viewer frame the CDN copy of the runtime script is the safe choice; on a normal site the local copy also works offline.
+    for (const base of framed ? [CDN, LOCAL] : [LOCAL, CDN]) {
+      try { await loadScript(base + 'ort.wasm.min.js'); if (window.ort) return base; } catch (e) { /* try the other copy */ }
+    }
+    throw new Error('ONNX Runtime did not load');
+  }
+
+  async function fetchModel(cfg, tick) {
+    if (!cfg.onnx_parts) return fetchBytes(cfg.onnx_file || 'model.onnx', tick);
+    // Some hosts only serve standard web file types, so the model can also ship as base64 JSON parts.
+    const parts = await Promise.all(cfg.onnx_parts.map(async (url) => {
+      const raw = await fetchBytes(url, tick);
+      const bin = atob(JSON.parse(new TextDecoder().decode(raw)).b64);
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+      return out;
+    }));
+    const all = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+    let o = 0; for (const p of parts) { all.set(p, o); o += p.length; }
+    return all;
+  }
+
+  async function fetchWasm(tick) {
+    try { return await fetchBytes(LOCAL + 'ort-wasm-simd-threaded.wasm', tick); }
+    catch (e) { return await fetchBytes(CDN + 'ort-wasm-simd-threaded.wasm', tick); }
+  }
+
+  async function fetchBytes(url, onBytes) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+    if (!res.body || !res.body.getReader) { const b = new Uint8Array(await res.arrayBuffer()); onBytes(b.length); return b; }
+    const reader = res.body.getReader(); const parts = []; let n = 0;
+    for (;;) { const { done, value } = await reader.read(); if (done) break; parts.push(value); n += value.length; onBytes(value.length); }
+    const out = new Uint8Array(n); let o = 0; for (const p of parts) { out.set(p, o); o += p.length; }
+    return out;
+  }
+
+  async function boot() {
+    try {
+      const cfgRes = await fetch('demo_config.json', { cache: 'no-cache' });
+      if (!cfgRes.ok) throw new Error('demo_config.json is missing');
+      const cfg = state.cfg = await cfgRes.json();
+      $('placeholder').hidden = !cfg.placeholder;
+      renderAbout(cfg); renderSamples(cfg);
+      const base = await loadOrt();
+      let got = 0; const approx = cfg.onnx_parts ? 27.5e6 : 23.5e6;
+      const tick = (k) => { got += k; setStatus('loading', `Downloading the model · ${(got / 1e6).toFixed(1)} of about ${(approx / 1e6).toFixed(0)} MB (first time only)`); };
+      const [wasm, model] = await Promise.all([fetchWasm(tick), fetchModel(cfg, tick)]);
+      setStatus('loading', 'Starting the model…');
+      ort.env.wasm.numThreads = 1;                                  // static hosts are not cross-origin isolated
+      ort.env.wasm.wasmBinary = wasm;
+      ort.env.wasm.wasmPaths = { mjs: base + 'ort-wasm-simd-threaded.mjs' };
+      state.session = await ort.InferenceSession.create(model, { executionProviders: ['wasm'], graphOptimizationLevel: 'all' });
+      state.inName = cfg.input_name || state.session.inputNames[0];
+      state.outName = cfg.output_name || state.session.outputNames[0];
+      await state.session.run({ [state.inName]: new ort.Tensor('float32', new Float32Array(3 * SIZE * SIZE), [1, 3, SIZE, SIZE]) });   // warm-up
+      for (const id of ['camBtn', 'pickBtn']) $(id).disabled = false;
+      document.querySelectorAll('.sample').forEach((b) => (b.disabled = false));
+      setStatus('ready', 'Ready · the model runs on this device');
+      registerOffline();
+    } catch (err) {
+      console.error(err);
+      setStatus('error', `The model could not start here (${err.message || err}). Open the demo in Chrome or Safari, or check the connection and reload.`);
+    }
+  }
+
+  function renderSamples(cfg) {
+    const strip = $('strip'); strip.textContent = '';
+    for (const s of cfg.samples || []) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'sample'; b.disabled = true;
+      const name = (cfg.class_names || {})[s.true_label] || s.true_label;
+      const src = s.source === 'PAD-UFES-20' ? 'phone photo' : 'dermoscopy';
+      b.setAttribute('aria-label', `Test image: ${name}, ${src}`);
+      const img = document.createElement('img'); img.src = s.file; img.alt = ''; img.loading = 'lazy';
+      const cap = document.createElement('span');
+      cap.innerHTML = '<span class="code"></span><span class="nm"></span><span class="src"></span>';
+      cap.querySelector('.code').textContent = s.true_label;
+      cap.querySelector('.nm').textContent = name;
+      cap.querySelector('.src').textContent = src;
+      b.append(img, cap);
+      b.addEventListener('click', () => runFromUrl(s.file, s));
+      strip.append(b);
+    }
+  }
+
+  function renderAbout(cfg) {
+    const t = cfg.test_summary || {};
+    const f = (v) => (typeof v === 'number' ? v.toFixed(3) : '–');
+    const ci = t.macro_f1_ci95 ? `95% CI ${f(t.macro_f1_ci95[0])}–${f(t.macro_f1_ci95[1])}` : '';
+    const facts = [
+      ['Macro-F1 (8 classes)', f(t.macro_f1), ci],
+      ['Balanced accuracy', f(t.balanced_accuracy), ''],
+      ['Melanoma AUC', f(t.melanoma_auc), ''],
+      ['"Refer" flag', `${pct(t.refer_sensitivity)} / ${pct(t.refer_specificity)}`, 'sensitivity / specificity'],
+    ];
+    $('facts').innerHTML = '';
+    for (const [k, v, small] of facts) {
+      const d = document.createElement('div');
+      d.innerHTML = '<dt></dt><dd><span></span><small></small></dd>';
+      d.querySelector('dt').textContent = k; d.querySelector('dd span').textContent = v; d.querySelector('small').textContent = small;
+      $('facts').append(d);
+    }
+    const thr = typeof cfg.refer_threshold === 'number' ? cfg.refer_threshold.toFixed(3) : '?';
+    $('howRefer').textContent = `Scores from ${t.n_test_images ? t.n_test_images.toLocaleString('en-US') + ' held-out' : 'held-out'} test images. ` +
+      `"Refer" means the malignancy score, P(MEL) + P(BCC) + P(SCC), reached ${thr}: the level that gave 90% specificity on the validation split.`;
+    if (cfg.data_credits) $('credits').textContent = 'Training data: ' + cfg.data_credits + '.';
+  }
+
+  function pct(v) { return typeof v === 'number' ? Math.round(v * 100) + '%' : '–'; }
+
+  function loadImage(url) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('this file is not an image the browser can open'));
+      img.src = url;
+    });
+  }
+
+  function squash(img) {
+    // Halve large photos first so the final resize does not alias, then squash to 256 x 256 and 224 x 224 (as in training).
+    let src = img, w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    while (w > 2 * STEP || h > 2 * STEP) {
+      const c = document.createElement('canvas'); c.width = Math.max(STEP, Math.ceil(w / 2)); c.height = Math.max(STEP, Math.ceil(h / 2));
+      const x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+      x.drawImage(src, 0, 0, c.width, c.height); src = c; w = c.width; h = c.height;
+    }
+    const a = document.createElement('canvas'); a.width = a.height = STEP;
+    const ax = a.getContext('2d'); ax.imageSmoothingEnabled = true; ax.imageSmoothingQuality = 'high'; ax.drawImage(src, 0, 0, STEP, STEP);
+    const view = $('view'); const vx = view.getContext('2d', { willReadFrequently: true });
+    vx.imageSmoothingEnabled = true; vx.imageSmoothingQuality = 'high'; vx.clearRect(0, 0, SIZE, SIZE); vx.drawImage(a, 0, 0, SIZE, SIZE);
+    const px = vx.getImageData(0, 0, SIZE, SIZE).data; const n = SIZE * SIZE; const data = new Float32Array(3 * n);
+    for (let i = 0; i < n; i++) { data[i] = px[4 * i] / 255; data[n + i] = px[4 * i + 1] / 255; data[2 * n + i] = px[4 * i + 2] / 255; }
+    window.__lastInput = data;                                     // used by the automated check only
+    return new ort.Tensor('float32', data, [1, 3, SIZE, SIZE]);
+  }
+
+  async function runFromUrl(url, sample) {
+    if (!state.session || state.busy) return;
+    state.busy = true;
+    try {
+      const img = await loadImage(url);
+      const tensor = squash(img);
+      const t0 = performance.now();
+      const out = await state.session.run({ [state.inName]: tensor });
+      const ms = performance.now() - t0;
+      render(Array.from(out[state.outName].data), ms, sample);
+    } catch (err) {
+      console.error(err);
+      $('chip').className = 'chip idle'; $('chip').textContent = 'Could not read that image';
+      $('score').textContent = String(err.message || err);
+    } finally { state.busy = false; }
+  }
+
+  function render(probs, ms, sample) {
+    const cfg = state.cfg; const classes = cfg.classes; const names = cfg.class_names || {};
+    const malIdx = new Set((cfg.malignant_classes || []).map((c) => classes.indexOf(c)));
+    const mal = probs.reduce((s, p, i) => (malIdx.has(i) ? s + p : s), 0);
+    const refer = mal >= cfg.refer_threshold;
+    $('chip').className = 'chip ' + (refer ? 'refer' : 'ok');
+    $('chip').textContent = refer ? 'Refer to a doctor' : 'Low concern';
+    $('score').innerHTML = `Malignancy score <span class="num"></span> · refer at <span class="num"></span> or more`;
+    const dp = mal.toFixed(3) === cfg.refer_threshold.toFixed(3) ? 4 : 3;      // never show a tie that hides the real comparison
+    const nums = $('score').querySelectorAll('.num'); nums[0].textContent = mal.toFixed(dp); nums[1].textContent = cfg.refer_threshold.toFixed(dp);
+    const truth = $('truth');
+    if (sample) {
+      const right = classes[probs.indexOf(Math.max(...probs))] === sample.true_label;
+      truth.hidden = false;
+      truth.textContent = `True diagnosis: ${names[sample.true_label] || sample.true_label} (${sample.source} test image). ` +
+        (right ? 'The top guess is right.' : 'The top guess is wrong.') +
+        (sample.note && sample.note.includes('missed') ? ' Included on purpose: a melanoma this model misses.' : '');
+    } else { truth.hidden = true; }
+    const order = probs.map((p, i) => [p, i]).sort((a, b) => b[0] - a[0]);
+    fillBars($('top3'), order.slice(0, 3), classes, names, malIdx);
+    fillBars($('all'), order, classes, names, malIdx);
+    state.runs += 1;
+    $('meta').innerHTML = '';
+    for (const text of [`${Math.round(ms)} ms on this device`, 'WebAssembly, 1 thread', `${state.runs} image${state.runs > 1 ? 's' : ''} checked`]) {
+      const s = document.createElement('span'); s.className = 'num'; s.textContent = text; $('meta').append(s);
+    }
+  }
+
+  function fillBars(list, rows, classes, names, malIdx) {
+    list.textContent = '';
+    for (const [p, i] of rows) {
+      const li = document.createElement('li');
+      li.innerHTML = '<div class="row"><span class="name"><span class="tag"></span><span class="label"></span></span><span class="num pct"></span></div><div class="track"><div class="fill"></div></div>';
+      li.querySelector('.tag').textContent = classes[i];
+      li.querySelector('.label').textContent = names[classes[i]] || classes[i];
+      if (malIdx.has(i)) { const m = document.createElement('span'); m.className = 'mal'; m.textContent = 'malignant'; li.querySelector('.name').append(m); }
+      li.querySelector('.pct').textContent = (p * 100).toFixed(1) + '%';
+      const fill = li.querySelector('.fill'); fill.style.width = Math.max(1, p * 100).toFixed(1) + '%';
+      if (malIdx.has(i)) fill.classList.add('malignant');
+      list.append(li);
+    }
+  }
+
+  function onFile(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    runFromUrl(url, null).finally(() => { URL.revokeObjectURL(url); input.value = ''; });
+  }
+
+  function registerOffline() {
+    try {
+      if ('serviceWorker' in navigator && location.protocol === 'https:' && window.self === window.top) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      }
+    } catch (e) { /* not available here; the page still works while it stays open */ }
+  }
+
+  $('camBtn').addEventListener('click', () => $('camInput').click());
+  $('pickBtn').addEventListener('click', () => $('pickInput').click());
+  $('camInput').addEventListener('change', (e) => onFile(e.target));
+  $('pickInput').addEventListener('change', (e) => onFile(e.target));
+  boot();
+})();
+</script>
+</body>
+</html>
