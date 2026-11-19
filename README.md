@@ -9,4 +9,6 @@ A MobileNetV3-Large classifier for 8 skin-lesion types (the ISIC 2019 classes), 
 
 Research demo for teaching (MAAI901 Deep Learning for Visual Data, University of Wollongong in Dubai). It cannot diagnose skin cancer.
 
+**Group members:** Ali Aljawi, Bushra Siddiqui, Kainaz Chohan, Meyyappan Venkatesh, Mohammed Khan.
+
 **Data:** ISIC 2019 (CC BY-NC 4.0) and PAD-UFES-20 (CC BY 4.0). The sample images in `docs/samples` come from the held-out test split of these datasets.
